@@ -1,5 +1,8 @@
+use std::thread;
+
 use anyhow::{Context, Result};
 use clap::Parser;
+use signal_hook::iterator::Signals;
 
 #[derive(Parser)]
 struct Cli {
@@ -8,6 +11,14 @@ struct Cli {
 }
 
 fn main() -> Result<()> {
+    let mut signals = Signals::new([signal_hook::consts::SIGINT, signal_hook::consts::SIGTERM])?;
+
+    thread::spawn(move || {
+        for sig in signals.forever() {
+            println!("Received signal {:?}: ", sig)
+        }
+    });
+
     let args = Cli::parse();
 
     let file_content = std::fs::read_to_string(&args.path)
